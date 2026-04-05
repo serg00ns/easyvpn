@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>easyvpn</title>
+    <meta
+      name="description"
+      content="easyvpn frontend with hash routing and cookie-based theme switching."
+    />
+    <script>
+      (function () {
+        var match = document.cookie.match(/(?:^|; )easyvpn_theme=([^;]+)/);
+        var theme = match ? decodeURIComponent(match[1]) : "dark";
+        document.documentElement.setAttribute("data-theme", theme === "light" ? "light" : "dark");
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style/styles.css" />
+    <script defer src="scripts/config.js"></script>
+    <script defer src="scripts/app.js"></script>
+  </head>
+  <body>
+    <div class="bg-orb orb-a" aria-hidden="true"></div>
+    <div class="bg-orb orb-b" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#/servers">easyvpn</a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#/servers" data-link>Servers</a>
+        <a href="#/clients" data-link>Clients</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch theme">
+        Light Mode
+      </button>
+    </header>
+
+    <main id="app" class="view" aria-live="polite"></main>
+
+    <footer class="site-footer">
+      <p>easyvpn</p>
+    </footer>
+  </body>
+</html>
