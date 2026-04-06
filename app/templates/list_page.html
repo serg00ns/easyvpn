@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <span class="pill">{{ page_name }}</span>
+  {% if page_hint %}
+  <p class="lead">{{ page_hint }}</p>
+  {% endif %}
+  <ul class="server-list" aria-live="polite">
+    {% if error_message %}
+    <li class="server-list-item server-list-item-error">
+      <span class="warn-triangle" aria-hidden="true">!</span>
+      <div>
+        <strong>{{ page_name }} list error</strong>
+        <span>{{ error_message }}</span>
+      </div>
+    </li>
+    {% elif items %}
+      {% for item in items %}
+      <li class="server-list-item">
+        <strong>{{ item.title }}</strong>
+        <span>{{ item.subtitle }}</span>
+      </li>
+      {% endfor %}
+    {% else %}
+    <li class="server-list-item">
+      <strong>{{ empty_title }}</strong>
+      <span>{{ empty_text }}</span>
+    </li>
+    {% endif %}
+  </ul>
+  <a class="cta" href="{{ cta_href }}">{{ cta_label }}</a>
+</section>
+{% endblock %}

@@ -47,10 +47,6 @@ body {
   overflow-x: hidden;
 }
 
-.bg-orb {
-  display: none;
-}
-
 .site-header,
 .site-footer {
   width: min(1100px, 92vw);
@@ -134,32 +130,16 @@ body {
   animation: reveal 400ms ease;
 }
 
-h1,
 h2 {
   font-family: "Syne", sans-serif;
   margin-top: 0;
   line-height: 1.1;
 }
 
-h1 {
-  font-size: clamp(2rem, 8vw, 4rem);
-  margin-bottom: 0.6rem;
-}
-
 .lead {
   color: var(--muted);
   font-size: clamp(1rem, 2.2vw, 1.2rem);
   max-width: 55ch;
-}
-
-.grid {
-  display: grid;
-  gap: 0.9rem;
-  margin-top: 1.25rem;
-}
-
-.grid.cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .pill {
@@ -172,18 +152,6 @@ h1 {
   font-size: 0.82rem;
   font-weight: 600;
   margin-bottom: 0.8rem;
-}
-
-.tile {
-  background: color-mix(in srgb, var(--panel) 45%, var(--paper));
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  padding: 1rem;
-}
-
-.tile h3 {
-  margin-top: 0;
-  margin-bottom: 0.4rem;
 }
 
 .server-list {
@@ -258,6 +226,7 @@ h1 {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -265,10 +234,6 @@ h1 {
 }
 
 @media (max-width: 820px) {
-  .grid.cols-3 {
-    grid-template-columns: 1fr;
-  }
-
   .site-header {
     display: grid;
     grid-template-columns: 1fr;
