@@ -18,8 +18,27 @@
     {% elif items %}
       {% for item in items %}
       <li class="server-list-item">
-        <strong>{{ item.title }}</strong>
-        <span>{{ item.subtitle }}</span>
+        <div class="server-item-row">
+          <div>
+            {% if item.dashboard_href %}
+            <a class="server-link" href="{{ item.dashboard_href }}"><strong>{{ item.title }}</strong></a>
+            {% else %}
+            <strong>{{ item.title }}</strong>
+            {% endif %}
+            <span>{{ item.subtitle }}</span>
+          </div>
+          {% if page_name == "Servers" and item.id %}
+          <form method="post" action="/servers/{{ item.id }}/check-status">
+            <input type="hidden" name="next_path" value="/servers" />
+            <button class="mini-action" type="submit">Check Status</button>
+          </form>
+          {% endif %}
+        </div>
+        {% if item.check_message %}
+        <span class="check-result {% if item.check_kind == 'ok' %}check-ok{% else %}check-error{% endif %}">
+          {{ item.check_message }}
+        </span>
+        {% endif %}
       </li>
       {% endfor %}
     {% else %}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from urllib.parse import urlencode
 
 if __package__ in (None, ""):
     sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -12,7 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.auth import THEME_COOKIE_NAME, is_authenticated, login_redirect, normalize_theme, router as auth_router, safe_next_path
-from app.database import add_server, fetch_clients, fetch_servers, init_database
+from app.connector import SSHClientConfig, SSHConnectionError, SSHConnector
+from app.database import add_server, fetch_clients, fetch_servers, get_server_connection_details, init_database
 
 app = FastAPI(title="easyvpn")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -21,9 +23,12 @@ app.state.templates = templates
 app.include_router(auth_router)
 
 
-def build_server_items(servers: list[dict[str, str]]) -> list[dict[str, str]]:
+def build_server_items(servers: list[dict[str, str]], check_results: dict[str, dict[str, str]] | None = None) -> list[dict[str, str]]:
+    check_results = check_results or {}
     return [
         {
+            "id": server.get("id", ""),
+            "dashboard_href": f"/servers/{server.get('id', '')}" if server.get("id") else "",
             "title": server.get("name") or server.get("id") or "Unknown server",
             "subtitle": (
                 f"{server.get('region', 'Unknown region')}"
@@ -31,6 +36,8 @@ def build_server_items(servers: list[dict[str, str]]) -> list[dict[str, str]]:
                 f" · user: {server.get('username', 'N/A')}"
                 f" · {server.get('status', 'online')}"
             ),
+            "check_message": check_results.get(server.get("id", ""), {}).get("message", ""),
+            "check_kind": check_results.get(server.get("id", ""), {}).get("kind", ""),
         }
         for server in servers
     ]
@@ -67,6 +74,39 @@ def render_server_form(
     )
 
 
+def render_server_dashboard(
+    request: Request,
+    theme: str,
+    server: dict[str, str],
+    status_kind: str = "",
+    status_message: str = "",
+    command: str = "",
+    command_exit_code: int | None = None,
+    command_stdout: str = "",
+    command_stderr: str = "",
+    command_error: str = "",
+    status_code: int = 200,
+):
+    return templates.TemplateResponse(
+        request,
+        "server_dashboard.html",
+        {
+            "theme": theme,
+            "active_path": "/servers",
+            "is_authenticated": True,
+            "server": server,
+            "status_kind": status_kind,
+            "status_message": status_message,
+            "command": command,
+            "command_exit_code": command_exit_code,
+            "command_stdout": command_stdout,
+            "command_stderr": command_stderr,
+            "command_error": command_error,
+        },
+        status_code=status_code,
+    )
+
+
 @app.on_event("startup")
 async def startup_event() -> None:
     init_database()
@@ -85,7 +125,18 @@ async def servers_page(request: Request):
         return login_redirect("/servers")
 
     theme = normalize_theme(request.cookies.get(THEME_COOKIE_NAME))
-    items = build_server_items(fetch_servers())
+    checked_server_id = request.query_params.get("check_server_id", "")
+    checked_state = request.query_params.get("check_state", "")
+    checked_message = request.query_params.get("check_message", "")
+
+    check_results: dict[str, dict[str, str]] = {}
+    if checked_server_id and checked_state and checked_message:
+        check_results[checked_server_id] = {
+            "kind": checked_state,
+            "message": checked_message,
+        }
+
+    items = build_server_items(fetch_servers(), check_results)
     return templates.TemplateResponse(
         request,
         "list_page.html",
@@ -105,6 +156,125 @@ async def servers_page(request: Request):
             "is_authenticated": True,
         },
     )
+
+
+@app.get("/servers/{server_id}")
+async def server_dashboard_page(request: Request, server_id: str):
+    if not is_authenticated(request):
+        return login_redirect(f"/servers/{server_id}")
+
+    server = get_server_connection_details(server_id)
+    if server is None:
+        return RedirectResponse(url="/servers", status_code=303)
+
+    theme = normalize_theme(request.cookies.get(THEME_COOKIE_NAME))
+    return render_server_dashboard(
+        request=request,
+        theme=theme,
+        server=server,
+        status_kind=request.query_params.get("check_state", ""),
+        status_message=request.query_params.get("check_message", ""),
+    )
+
+
+@app.post("/servers/{server_id}/execute")
+async def execute_server_command(request: Request, server_id: str, command: str = Form(...)):
+    if not is_authenticated(request):
+        return login_redirect(f"/servers/{server_id}")
+
+    server = get_server_connection_details(server_id)
+    if server is None:
+        return RedirectResponse(url="/servers", status_code=303)
+
+    theme = normalize_theme(request.cookies.get(THEME_COOKIE_NAME))
+    trimmed_command = command.strip()
+    if not trimmed_command:
+        return render_server_dashboard(
+            request=request,
+            theme=theme,
+            server=server,
+            command_error="Command is required.",
+            status_code=400,
+        )
+
+    try:
+        connector = SSHConnector(
+            SSHClientConfig(
+                hostname=server["ip_address"],
+                username=server["username"],
+                private_key=server["ssh_private_key"],
+                timeout_seconds=8,
+            )
+        )
+        exit_code, stdout, stderr = connector.execute(trimmed_command)
+        return render_server_dashboard(
+            request=request,
+            theme=theme,
+            server=server,
+            command=trimmed_command,
+            command_exit_code=exit_code,
+            command_stdout=stdout,
+            command_stderr=stderr,
+        )
+    except SSHConnectionError as exc:
+        return render_server_dashboard(
+            request=request,
+            theme=theme,
+            server=server,
+            command=trimmed_command,
+            command_error=str(exc),
+            status_code=502,
+        )
+
+
+@app.post("/servers/{server_id}/check-status")
+async def check_server_status(request: Request, server_id: str, next_path: str = Form("/servers")):
+    if not is_authenticated(request):
+        return login_redirect("/servers")
+
+    redirect_path = safe_next_path(next_path, "/servers")
+
+    server = get_server_connection_details(server_id)
+    if server is None:
+        params = urlencode(
+            {
+                "check_server_id": server_id,
+                "check_state": "error",
+                "check_message": "Server not found",
+            }
+        )
+        separator = "&" if "?" in redirect_path else "?"
+        return RedirectResponse(url=f"{redirect_path}{separator}{params}", status_code=303)
+
+    try:
+        connector = SSHConnector(
+            SSHClientConfig(
+                hostname=server["ip_address"],
+                username=server["username"],
+                private_key=server["ssh_private_key"],
+                timeout_seconds=8,
+            )
+        )
+        with connector.connected_client():
+            pass
+        check_state = "ok"
+        check_message = "SSH connection successful"
+    except SSHConnectionError as exc:
+        check_state = "error"
+        check_message = str(exc)
+    except Exception:
+        check_state = "error"
+        check_message = "Unexpected SSH error"
+
+    params = urlencode(
+        {
+            "check_server_id": server_id,
+            "check_state": check_state,
+            "check_message": check_message,
+        }
+    )
+    separator = "&" if "?" in redirect_path else "?"
+    return RedirectResponse(url=f"{redirect_path}{separator}{params}", status_code=303)
 
 
 @app.get("/servers/new")

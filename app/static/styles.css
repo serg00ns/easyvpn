@@ -186,6 +186,100 @@ h2 {
   font-size: 0.9rem;
 }
 
+.server-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.server-item-row > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.server-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.server-link:hover {
+  text-decoration: underline;
+}
+
+.mini-action {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 25%, var(--paper));
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 0.55rem;
+  cursor: pointer;
+}
+
+.mini-action:hover {
+  border-color: var(--accent);
+}
+
+.check-result {
+  margin-top: 0.45rem;
+  display: inline-block;
+  border-radius: var(--radius);
+  padding: 0.28rem 0.52rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.check-ok {
+  border: 1px solid #22c55e;
+  background: color-mix(in srgb, #22c55e 20%, transparent);
+  color: var(--ink);
+}
+
+.check-error {
+  border: 1px solid #f59e0b;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: var(--ink);
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin: 0.8rem 0 0.2rem;
+}
+
+.dashboard-card {
+  margin-top: 0.8rem;
+}
+
+.command-meta {
+  margin-top: 0.8rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.command-output {
+  margin-top: 0.45rem;
+  background: color-mix(in srgb, var(--panel) 35%, var(--paper));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.7rem;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.86rem;
+}
+
+.command-output-error {
+  border-color: #f59e0b;
+}
+
 .server-list-item-error {
   grid-template-columns: auto 1fr;
   align-items: center;

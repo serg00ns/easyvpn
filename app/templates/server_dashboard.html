@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <span class="pill">Server Dashboard</span>
+  <h2>{{ server.name }}</h2>
+  <p class="lead">
+    {{ server.region }} · {{ server.ip_address }} · user: {{ server.username }} · {{ server.status }}
+  </p>
+
+  <div class="dashboard-actions">
+    <form method="post" action="/servers/{{ server.id }}/check-status">
+      <input type="hidden" name="next_path" value="/servers/{{ server.id }}" />
+      <button class="mini-action" type="submit">Check Status</button>
+    </form>
+    <a class="cta cta-secondary" href="/servers">Back to servers</a>
+  </div>
+
+  {% if status_message %}
+  <p class="check-result {% if status_kind == 'ok' %}check-ok{% else %}check-error{% endif %}">
+    {{ status_message }}
+  </p>
+  {% endif %}
+</section>
+
+<section class="card dashboard-card">
+  <span class="pill">Remote Command</span>
+  <form class="auth-form" method="post" action="/servers/{{ server.id }}/execute">
+    <label for="command">Command</label>
+    <input id="command" name="command" type="text" value="{{ command }}" placeholder="uname -a" required />
+    <button class="cta" type="submit">Run command</button>
+  </form>
+
+  {% if command_error %}
+  <p class="auth-error" role="alert">{{ command_error }}</p>
+  {% endif %}
+
+  {% if command_exit_code is not none %}
+  <p class="command-meta">Exit code: {{ command_exit_code }}</p>
+  {% endif %}
+
+  {% if command_stdout %}
+  <h3>STDOUT</h3>
+  <pre class="command-output">{{ command_stdout }}</pre>
+  {% endif %}
+
+  {% if command_stderr %}
+  <h3>STDERR</h3>
+  <pre class="command-output command-output-error">{{ command_stderr }}</pre>
+  {% endif %}
+</section>
+{% endblock %}

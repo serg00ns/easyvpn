@@ -95,6 +95,19 @@ def fetch_servers() -> list[dict[str, str]]:
     return [dict(row) for row in rows]
 
 
+def get_server_connection_details(server_id: str) -> dict[str, str] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, name, region, ip_address, username, status, ssh_private_key
+            FROM servers
+            WHERE id = ?
+            """,
+            (server_id,),
+        ).fetchone()
+    return dict(row) if row is not None else None
+
+
 def add_server(
     name: str,
     region: str,
