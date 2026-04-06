@@ -29,6 +29,11 @@
     </li>
     {% endif %}
   </ul>
-  <a class="cta" href="{{ cta_href }}">{{ cta_label }}</a>
+  <div class="cta-row">
+    <a class="cta" href="{{ cta_href }}">{{ cta_label }}</a>
+    {% if secondary_cta_href and secondary_cta_label %}
+    <a class="cta cta-secondary" href="{{ secondary_cta_href }}">{{ secondary_cta_label }}</a>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}

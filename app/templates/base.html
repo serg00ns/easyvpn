@@ -15,17 +15,26 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/servers">easyvpn</a>
+      <a class="brand" href="{% if is_authenticated %}/servers{% else %}/login{% endif %}">easyvpn</a>
+      {% if is_authenticated %}
       <nav class="nav" aria-label="Main navigation">
         <a href="/servers" class="{% if active_path == '/servers' %}active{% endif %}">Servers</a>
         <a href="/clients" class="{% if active_path == '/clients' %}active{% endif %}">Clients</a>
       </nav>
+      {% endif %}
+      <div class="header-actions">
       <form method="post" action="/theme/toggle">
         <input type="hidden" name="next_path" value="{{ request.url.path }}" />
         <button class="theme-toggle" type="submit">
           {% if theme == "dark" %}Light Mode{% else %}Dark Mode{% endif %}
         </button>
       </form>
+      {% if is_authenticated %}
+      <form method="post" action="/logout">
+        <button class="theme-toggle" type="submit">Logout</button>
+      </form>
+      {% endif %}
+      </div>
     </header>
 
     <main class="view" aria-live="polite">

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card auth-card">
+  <span class="pill">Server</span>
+  <h2>Add Server</h2>
+  <p class="lead">Provide server connection details including SSH private key.</p>
+
+  {% if error_message %}
+  <p class="auth-error" role="alert">{{ error_message }}</p>
+  {% endif %}
+
+  <form class="auth-form" method="post" action="/servers/new">
+    <label for="name">Name</label>
+    <input id="name" name="name" type="text" value="{{ form_data.name }}" required />
+
+    <label for="region">Region</label>
+    <input id="region" name="region" type="text" value="{{ form_data.region }}" required />
+
+    <label for="ip_address">IP Address</label>
+    <input id="ip_address" name="ip_address" type="text" value="{{ form_data.ip_address }}" required />
+
+    <label for="username">SSH Username</label>
+    <input id="username" name="username" type="text" value="{{ form_data.username }}" required />
+
+    <label for="status">Status</label>
+    <input id="status" name="status" type="text" value="{{ form_data.status }}" required />
+
+    <label for="ssh_private_key">SSH Private Key</label>
+    <textarea id="ssh_private_key" name="ssh_private_key" rows="10" required>{{ form_data.ssh_private_key }}</textarea>
+
+    <div class="cta-row">
+      <button class="cta" type="submit">Save server</button>
+      <a class="cta cta-secondary" href="/servers">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
